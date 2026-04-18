@@ -6,20 +6,24 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    existing_user = User.query.filter_by(username=username).first()
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        existing_user = User.query.filter_by(username=username).first()
+    
     if existing_user:
         flash("This user already exists")
         return redirect(url_for('auth.register'))
     else:
-        new_user = User(username=username)
+        new_user = User(username=username, email=email)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
         flash("Registration Sucessful! Redirecting")
         return redirect(url_for('auth.login'))
-    
+    return render_template('register.html')
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     username = request.form.get('username')
@@ -31,3 +35,10 @@ def login():
     else:
         flash("Invalid username or password, please try again.")
         return redirect(url_for('auth.login'))
+    
+@auth_bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("You have been successfully logged out!")
+    return redirect(url_for('auth.login'))
